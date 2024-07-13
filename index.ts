@@ -63,10 +63,8 @@ import { saveSession } from "./utils/saveSession";
 
   if (unenteredGiveaways.length) {
     console.log(
-      `There are ${unenteredGiveaways.length} unentered giveaways, checking which ones you can enter...`,
+      `There are ${unenteredGiveaways.length} unentered giveaways, checking which ones you can enter...\n`,
     );
-
-    console.log(unenteredGiveaways);
 
     const multiCopiesGiveaways = unenteredGiveaways
       .filter((giveaway) => giveaway.copies > 1)
@@ -91,7 +89,7 @@ import { saveSession } from "./utils/saveSession";
         if (totalCost + cost <= currPoints) {
           totalCost += cost;
           console.log(
-            `Found a giveaway for ${copies} copies of "${name}" that costs ${cost} ${cost > 1 ? "points" : "point"}.`,
+            `\nFound a giveaway for ${copies} copies of "${name}" that costs ${cost} ${cost > 1 ? "points" : "point"}.`,
           );
 
           allGiveaways.push(giveaway);
@@ -112,6 +110,14 @@ import { saveSession } from "./utils/saveSession";
           allGiveaways.push(giveaway);
         }
       });
+    }
+
+    if (allGiveaways.length) {
+      console.log(
+        `\nFound a total of ${allGiveaways.length} ${allGiveaways.length > 1 ? "giveaways" : "giveaway"} with a total cost of ${totalCost} ${totalCost > 1 ? "points" : "point"}, entering...`,
+      );
+    } else {
+      console.log("Found no giveaways you can afford.");
     }
   } else {
     console.log("Found no unentered giveaways.");

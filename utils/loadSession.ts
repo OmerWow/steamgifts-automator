@@ -10,7 +10,9 @@ export const loadSession = async (page: Page, cookiesFilePath: string) => {
       for (let cookie of parsedCookies) {
         await page.setCookie(cookie);
       }
-      console.log("Session has been succesfully loaded");
+      console.info("Session has been succesfully loaded\n");
     }
+  } else {
+    console.warn("No previous session found");
   }
 };
