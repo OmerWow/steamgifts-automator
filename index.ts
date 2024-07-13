@@ -89,7 +89,7 @@ import { saveSession } from "./utils/saveSession";
         if (totalCost + cost <= currPoints) {
           totalCost += cost;
           console.log(
-            `\nFound a giveaway for ${copies} copies of "${name}" that costs ${cost} ${cost > 1 ? "points" : "point"}.`,
+            `Found a giveaway for ${copies} copies of "${name}" that costs ${cost} ${cost > 1 ? "points" : "point"}.`,
           );
 
           allGiveaways.push(giveaway);
@@ -116,6 +116,23 @@ import { saveSession } from "./utils/saveSession";
       console.log(
         `\nFound a total of ${allGiveaways.length} ${allGiveaways.length > 1 ? "giveaways" : "giveaway"} with a total cost of ${totalCost} ${totalCost > 1 ? "points" : "point"}, entering...`,
       );
+
+      for (let i = 0; i < allGiveaways.length; i++) {
+        const { href } = allGiveaways[i];
+
+        const giveawayPage = await browser.newPage();
+        await giveawayPage.goto(href);
+
+        const enterButton = await giveawayPage.$(".sidebar__entry-insert");
+        if (enterButton) {
+          await enterButton.click();
+          console.info(`Entered giveaway ${i + 1}/${allGiveaways.length}.`);
+        } else {
+          console.error("Could not find the enter button.");
+        }
+
+        await giveawayPage.close();
+      }
     } else {
       console.log("Found no giveaways you can afford.");
     }
