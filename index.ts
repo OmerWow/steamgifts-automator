@@ -84,6 +84,19 @@ import type { Giveaway } from "./types/giveaways";
 
   console.log(unenteredGiveaways);
 
+  const multiCopiesGiveaways = unenteredGiveaways
+    .filter((giveaway) => giveaway.copies > 1)
+    .sort((a, b) => {
+      if (a.copies === b.copies) {
+        return a.cost < b.cost ? 1 : -1;
+      }
+      return a.copies < b.copies ? 1 : -1;
+    });
+
+  const singleCopyGiveaways = unenteredGiveaways
+    .filter((giveaway) => giveaway.copies === 1)
+    .sort((a, b) => (a.cost < b.cost ? 1 : -1));
+
   await landingPage.close();
 
   await browser.close();
