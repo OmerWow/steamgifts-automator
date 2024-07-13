@@ -61,7 +61,9 @@ import { saveSession } from "./utils/saveSession";
         }),
   );
 
-  console.log(`There are ${unenteredGiveaways.length} unentered giveaways.`);
+  console.log(
+    `There are ${unenteredGiveaways.length} unentered giveaways, checking which ones you can enter...`,
+  );
 
   console.log(unenteredGiveaways);
 
@@ -77,6 +79,39 @@ import { saveSession } from "./utils/saveSession";
   const singleCopyGiveaways = unenteredGiveaways
     .filter((giveaway) => giveaway.copies === 1)
     .sort((a, b) => (a.cost < b.cost ? 1 : -1));
+
+  let totalCost = 0;
+  const allGiveaways: Giveaway[] = [];
+
+  if (multiCopiesGiveaways.length) {
+    multiCopiesGiveaways.forEach((giveaway) => {
+      const { name, copies, cost } = giveaway;
+
+      if (totalCost + cost <= currPoints) {
+        totalCost += cost;
+        console.log(
+          `Found a giveaway for ${copies} copies of "${name}" that costs ${cost} ${cost > 1 ? "points" : "point"}.`,
+        );
+
+        allGiveaways.push(giveaway);
+      }
+    });
+  }
+
+  if (singleCopyGiveaways.length) {
+    singleCopyGiveaways.forEach((giveaway) => {
+      const { name, cost } = giveaway;
+
+      if (totalCost + cost <= currPoints) {
+        totalCost += cost;
+        console.log(
+          `Found a giveaway for 1 copy of "${name}" that costs ${cost} ${cost > 1 ? "points" : "point"}.`,
+        );
+
+        allGiveaways.push(giveaway);
+      }
+    });
+  }
 
   await saveSession(landingPage, cookiesFilePath);
 
