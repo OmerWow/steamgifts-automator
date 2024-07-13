@@ -1,10 +1,11 @@
 import puppeteer from "puppeteer";
 import fs from "fs";
+import type { Giveaway } from "./types/giveaways";
 
 (async () => {
   const cookiesFilePath = "cookies.json";
 
-  const browser = await puppeteer.launch({ headless: false });
+  const browser = await puppeteer.launch({ headless: true });
   const landingPage = await browser.newPage();
 
   const previousSession = fs.existsSync(cookiesFilePath);
@@ -25,7 +26,7 @@ import fs from "fs";
 
   // Save Session Cookies
   const cookiesObject = await landingPage.cookies();
-  fs.writeFile(cookiesFilePath, JSON.stringify(cookiesObject), function (err) {
+  fs.writeFile(cookiesFilePath, JSON.stringify(cookiesObject), (err) => {
     if (err) {
       console.log("The file could not be written.", err);
     }
@@ -35,7 +36,63 @@ import fs from "fs";
   const currPoints = await landingPage.$eval(".nav__points", (el) =>
     parseInt(el.textContent || "0"),
   );
-  console.log(`You currently have ${currPoints} points.`);
+  console.log(`You currently have ${currPoints} points, getting giveaways...`);
+
+  const unenteredGiveaways = await landingPage.$$eval(
+    "div.giveaway__row-inner-wrap",
+    (els) =>
+      els
+        .filter((el) => !el.className.includes("is-faded"))
+        .map((el) => {
+          let currentGiveaway: Giveaway = {
+            name: "",
+            copies: 0,
+            cost: 0,
+            href: "",
+          };
+
+          let name, copies, cost, href;
+          name = el.querySelector("a.giveaway__heading__name")?.textContent;
+          currentGiveaway.name = name || "";
+
+          const copiesOrCost = el.querySelector("span.giveaway__heading__thin");
+          if (copiesOrCost?.textContent?.includes("Copies")) {
+            copies = parseInt(
+              copiesOrCost.textContent.substring(
+                1,
+                copiesOrCost.textContent.indexOf(" "),
+              ),
+            );
+            cost = parseInt(
+              copiesOrCost.nextElementSibling?.textContent?.substring(
+                1,
+                copiesOrCost.nextElementSibling?.textContent.indexOf("P"),
+              ) || "0",
+            );
+          } else {
+            copies = 1;
+            cost = parseInt(
+              copiesOrCost?.textContent?.substring(
+                1,
+                copiesOrCost?.textContent?.indexOf("P"),
+              ) || "0",
+            );
+          }
+          currentGiveaway.copies = copies;
+          currentGiveaway.cost = cost;
+
+          href = (
+            el.querySelector("a.giveaway__heading__name") as HTMLAnchorElement
+          )?.href;
+          currentGiveaway.href = href || "";
+
+          return currentGiveaway;
+        }),
+  );
+
+  console.log(`There are ${unenteredGiveaways.length} unentered giveaways.`);
+
+  console.log(unenteredGiveaways);
 
   await landingPage.close();
 
