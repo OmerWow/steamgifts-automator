@@ -117,22 +117,30 @@ import { saveSession } from "./utils/saveSession";
         `\nFound a total of ${allGiveaways.length} ${allGiveaways.length > 1 ? "giveaways" : "giveaway"} with a total cost of ${totalCost} ${totalCost > 1 ? "points" : "point"}, entering...`,
       );
 
-      for (let i = 0; i < allGiveaways.length; i++) {
-        const { href } = allGiveaways[i];
+      const giveawayPromises = allGiveaways.map(async (giveaway, index) => {
+        const { href } = giveaway;
 
         const giveawayPage = await browser.newPage();
         await giveawayPage.goto(href);
 
-        const enterButton = await giveawayPage.$(".sidebar__entry-insert");
-        if (enterButton) {
-          await enterButton.click();
-          console.info(`Entered giveaway ${i + 1}/${allGiveaways.length}.`);
-        } else {
-          console.error("Could not find the enter button.");
+        try {
+          const enterButton = await giveawayPage.$(".sidebar__entry-insert");
+          if (enterButton) {
+            await enterButton.click();
+            console.info(
+              `Entered giveaway ${allGiveaways.length - index + 1}/${allGiveaways.length}.`,
+            );
+          } else {
+            console.warn(`Enter button not found for giveaway: ${href}`);
+          }
+        } catch (error) {
+          console.error(`Error entering giveaway ${href}:`, error);
+        } finally {
+          await giveawayPage.close();
         }
+      });
 
-        await giveawayPage.close();
-      }
+      await Promise.all(giveawayPromises);
     } else {
       console.log("Found no giveaways you can afford.");
     }
