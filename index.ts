@@ -61,56 +61,60 @@ import { saveSession } from "./utils/saveSession";
         }),
   );
 
-  console.log(
-    `There are ${unenteredGiveaways.length} unentered giveaways, checking which ones you can enter...`,
-  );
+  if (unenteredGiveaways.length) {
+    console.log(
+      `There are ${unenteredGiveaways.length} unentered giveaways, checking which ones you can enter...`,
+    );
 
-  console.log(unenteredGiveaways);
+    console.log(unenteredGiveaways);
 
-  const multiCopiesGiveaways = unenteredGiveaways
-    .filter((giveaway) => giveaway.copies > 1)
-    .sort((a, b) => {
-      if (a.copies === b.copies) {
-        return a.cost < b.cost ? 1 : -1;
-      }
-      return a.copies < b.copies ? 1 : -1;
-    });
+    const multiCopiesGiveaways = unenteredGiveaways
+      .filter((giveaway) => giveaway.copies > 1)
+      .sort((a, b) => {
+        if (a.copies === b.copies) {
+          return a.cost < b.cost ? 1 : -1;
+        }
+        return a.copies < b.copies ? 1 : -1;
+      });
 
-  const singleCopyGiveaways = unenteredGiveaways
-    .filter((giveaway) => giveaway.copies === 1)
-    .sort((a, b) => (a.cost < b.cost ? 1 : -1));
+    const singleCopyGiveaways = unenteredGiveaways
+      .filter((giveaway) => giveaway.copies === 1)
+      .sort((a, b) => (a.cost < b.cost ? 1 : -1));
 
-  let totalCost = 0;
-  const allGiveaways: Giveaway[] = [];
+    let totalCost = 0;
+    const allGiveaways: Giveaway[] = [];
 
-  if (multiCopiesGiveaways.length) {
-    multiCopiesGiveaways.forEach((giveaway) => {
-      const { name, copies, cost } = giveaway;
+    if (multiCopiesGiveaways.length) {
+      multiCopiesGiveaways.forEach((giveaway) => {
+        const { name, copies, cost } = giveaway;
 
-      if (totalCost + cost <= currPoints) {
-        totalCost += cost;
-        console.log(
-          `Found a giveaway for ${copies} copies of "${name}" that costs ${cost} ${cost > 1 ? "points" : "point"}.`,
-        );
+        if (totalCost + cost <= currPoints) {
+          totalCost += cost;
+          console.log(
+            `Found a giveaway for ${copies} copies of "${name}" that costs ${cost} ${cost > 1 ? "points" : "point"}.`,
+          );
 
-        allGiveaways.push(giveaway);
-      }
-    });
-  }
+          allGiveaways.push(giveaway);
+        }
+      });
+    }
 
-  if (singleCopyGiveaways.length) {
-    singleCopyGiveaways.forEach((giveaway) => {
-      const { name, cost } = giveaway;
+    if (singleCopyGiveaways.length) {
+      singleCopyGiveaways.forEach((giveaway) => {
+        const { name, cost } = giveaway;
 
-      if (totalCost + cost <= currPoints) {
-        totalCost += cost;
-        console.log(
-          `Found a giveaway for 1 copy of "${name}" that costs ${cost} ${cost > 1 ? "points" : "point"}.`,
-        );
+        if (totalCost + cost <= currPoints) {
+          totalCost += cost;
+          console.log(
+            `Found a giveaway for 1 copy of "${name}" that costs ${cost} ${cost > 1 ? "points" : "point"}.`,
+          );
 
-        allGiveaways.push(giveaway);
-      }
-    });
+          allGiveaways.push(giveaway);
+        }
+      });
+    }
+  } else {
+    console.log("Found no unentered giveaways.");
   }
 
   await saveSession(landingPage, cookiesFilePath);
