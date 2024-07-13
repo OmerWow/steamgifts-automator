@@ -1,6 +1,7 @@
 import puppeteer from "puppeteer";
-import fs from "fs";
 import type { Giveaway } from "./types/giveaways";
+import { loadSession } from "./utils/loadSession";
+import { saveSession } from "./utils/saveSession";
 
 (async () => {
   const cookiesFilePath = "cookies.json";
@@ -8,30 +9,10 @@ import type { Giveaway } from "./types/giveaways";
   const browser = await puppeteer.launch({ headless: true });
   const landingPage = await browser.newPage();
 
-  const previousSession = fs.existsSync(cookiesFilePath);
-  if (previousSession) {
-    // If file exist load the cookies
-    const cookiesString = fs.readFileSync(cookiesFilePath);
-    const parsedCookies = JSON.parse(cookiesString.toString());
-    if (parsedCookies.length !== 0) {
-      for (let cookie of parsedCookies) {
-        await landingPage.setCookie(cookie);
-      }
-      console.log("Session has been loaded in the browser");
-    }
-  }
+  await loadSession(landingPage, cookiesFilePath);
 
   await landingPage.setViewport({ width: 1920, height: 1080 });
   await landingPage.goto("https://www.steamgifts.com");
-
-  // Save Session Cookies
-  const cookiesObject = await landingPage.cookies();
-  fs.writeFile(cookiesFilePath, JSON.stringify(cookiesObject), (err) => {
-    if (err) {
-      console.log("The file could not be written.", err);
-    }
-    console.log("Session has been successfully saved");
-  });
 
   const currPoints = await landingPage.$eval(".nav__points", (el) =>
     parseInt(el.textContent || "0"),
@@ -96,6 +77,8 @@ import type { Giveaway } from "./types/giveaways";
   const singleCopyGiveaways = unenteredGiveaways
     .filter((giveaway) => giveaway.copies === 1)
     .sort((a, b) => (a.cost < b.cost ? 1 : -1));
+
+  await saveSession(landingPage, cookiesFilePath);
 
   await landingPage.close();
 
