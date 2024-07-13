@@ -46,45 +46,35 @@ import type { Giveaway } from "./types/giveaways";
         .map((el) => {
           let currentGiveaway: Giveaway = {
             name: "",
-            copies: 0,
-            cost: 0,
             href: "",
+            copies: 1,
+            cost: 0,
           };
 
-          let name, copies, cost, href;
-          name = el.querySelector("a.giveaway__heading__name")?.textContent;
-          currentGiveaway.name = name || "";
+          const heading = el.querySelector("a.giveaway__heading__name");
+          currentGiveaway.name = heading?.textContent || "";
+          currentGiveaway.href = (heading as HTMLAnchorElement).href;
 
-          const copiesOrCost = el.querySelector("span.giveaway__heading__thin");
-          if (copiesOrCost?.textContent?.includes("Copies")) {
-            copies = parseInt(
-              copiesOrCost.textContent.substring(
-                1,
-                copiesOrCost.textContent.indexOf(" "),
-              ),
+          const copiesOrCostEl = el.querySelector(
+            "span.giveaway__heading__thin",
+          );
+          const copiesOrCostStr = copiesOrCostEl?.textContent;
+          if (copiesOrCostStr?.includes("Copies")) {
+            currentGiveaway.copies = parseInt(
+              copiesOrCostStr.substring(1, copiesOrCostStr.indexOf(" ")),
             );
-            cost = parseInt(
-              copiesOrCost.nextElementSibling?.textContent?.substring(
+            currentGiveaway.cost = parseInt(
+              copiesOrCostEl?.nextElementSibling?.textContent?.substring(
                 1,
-                copiesOrCost.nextElementSibling?.textContent.indexOf("P"),
+                copiesOrCostEl.nextElementSibling?.textContent.indexOf("P"),
               ) || "0",
             );
           } else {
-            copies = 1;
-            cost = parseInt(
-              copiesOrCost?.textContent?.substring(
-                1,
-                copiesOrCost?.textContent?.indexOf("P"),
-              ) || "0",
+            currentGiveaway.cost = parseInt(
+              copiesOrCostStr?.substring(1, copiesOrCostStr?.indexOf("P")) ||
+                "0",
             );
           }
-          currentGiveaway.copies = copies;
-          currentGiveaway.cost = cost;
-
-          href = (
-            el.querySelector("a.giveaway__heading__name") as HTMLAnchorElement
-          )?.href;
-          currentGiveaway.href = href || "";
 
           return currentGiveaway;
         }),
