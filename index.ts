@@ -32,6 +32,11 @@ import fs from "fs";
     console.log("Session has been successfully saved");
   });
 
+  const currPoints = await landingPage.$eval(".nav__points", (el) =>
+    parseInt(el.textContent || "0"),
+  );
+  console.log(`You currently have ${currPoints} points.`);
+
   await landingPage.close();
 
   await browser.close();
