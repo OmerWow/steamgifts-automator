@@ -2,14 +2,13 @@ import puppeteer from "puppeteer";
 import type { Giveaway } from "./types/giveaways";
 import { loadSession } from "./utils/loadSession";
 import { saveSession } from "./utils/saveSession";
+import { terminate } from "./utils/terminate";
 
 (async () => {
-  const cookiesFilePath = "cookies.json";
-
   const browser = await puppeteer.launch({ headless: true });
   const landingPage = await browser.newPage();
 
-  await loadSession(landingPage, cookiesFilePath);
+  await loadSession(landingPage);
 
   await landingPage.setViewport({ width: 1920, height: 1080 });
   await landingPage.goto("https://www.steamgifts.com");
@@ -19,14 +18,11 @@ import { saveSession } from "./utils/saveSession";
   );
 
   if (!currPoints) {
-    console.info("You have 0 points, exiting...");
-
-    await saveSession(landingPage, cookiesFilePath);
-
-    await landingPage.close();
-    await browser.close();
-
-    return;
+    return await terminate(
+      "You have 0 points, exiting...",
+      landingPage,
+      browser,
+    );
   }
 
   console.info(`You currently have ${currPoints} points, getting giveaways...`);
@@ -74,14 +70,11 @@ import { saveSession } from "./utils/saveSession";
   );
 
   if (!unenteredGiveaways.length) {
-    console.info("Found no giveaways you can afford, exiting...");
-
-    await saveSession(landingPage, cookiesFilePath);
-
-    await landingPage.close();
-    await browser.close();
-
-    return;
+    return await terminate(
+      "Found no affordable giveaways, exiting...",
+      landingPage,
+      browser,
+    );
   }
 
   console.info(
@@ -135,48 +128,37 @@ import { saveSession } from "./utils/saveSession";
   }
 
   if (!allGiveaways.length) {
-    console.info("Found no unentered giveaways, exiting...");
-
-    await saveSession(landingPage, cookiesFilePath);
-
-    await landingPage.close();
-    await browser.close();
-
-    return;
+    return await terminate(
+      "Found no unentered giveaways, exiting...",
+      landingPage,
+      browser,
+    );
   }
 
   console.info(
     `\nFound a total of ${allGiveaways.length} ${allGiveaways.length > 1 ? "giveaways" : "giveaway"} with a total cost of ${totalCost} ${totalCost > 1 ? "points" : "point"}, entering...`,
   );
 
-  const giveawayPromises = allGiveaways.map(async (giveaway, index) => {
-    const { href } = giveaway;
-
+  const giveawayPromises = allGiveaways.map(async ({ href }) => {
     const giveawayPage = await browser.newPage();
     await giveawayPage.goto(href);
 
     try {
-      const enterButton = await giveawayPage.$(".sidebar__entry-insert");
-      if (enterButton) {
-        await enterButton.click();
-        console.info(
-          `Entered giveaway ${allGiveaways.length - index}/${allGiveaways.length}.`,
-        );
-      } else {
-        console.warn(`Enter button not found for giveaway: ${href}`);
-      }
+      await giveawayPage.$eval(".sidebar__entry-insert", (el) =>
+        (el as HTMLButtonElement).click(),
+      );
+      console.info(`Entered giveaway ${href}.`);
     } catch (error) {
       console.error(`Error entering giveaway ${href}:`, error);
-    } finally {
-      await giveawayPage.close();
     }
-  });
 
+    await giveawayPage.close();
+  });
   await Promise.all(giveawayPromises);
 
-  await saveSession(landingPage, cookiesFilePath);
-
-  await landingPage.close();
-
-  await browser.close();
+  return await terminate(
+    "All giveaways entered, exiting...",
+    landingPage,
+    browser,
+  );
 })();
