@@ -7,6 +7,6 @@ export const saveSession = async (page: Page, cookiesFilePath: string) => {
     if (err) {
       console.error("The file could not be written.", err);
     }
-    console.info("Session has been successfully saved");
+    console.info("\nSession has been successfully saved");
   });
 };
