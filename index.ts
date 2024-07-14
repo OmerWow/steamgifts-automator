@@ -29,7 +29,7 @@ import { saveSession } from "./utils/saveSession";
     return;
   }
 
-  console.log(`You currently have ${currPoints} points, getting giveaways...`);
+  console.info(`You currently have ${currPoints} points, getting giveaways...`);
 
   const unenteredGiveaways = await landingPage.$$eval(
     "div.giveaway__row-inner-wrap",
@@ -73,92 +73,106 @@ import { saveSession } from "./utils/saveSession";
         }),
   );
 
-  if (unenteredGiveaways.length) {
-    console.log(
-      `There are ${unenteredGiveaways.length} unentered giveaways, checking which ones you can enter...\n`,
-    );
+  if (!unenteredGiveaways.length) {
+    console.info("Found no giveaways you can afford, exiting...");
 
-    const multiCopiesGiveaways = unenteredGiveaways
-      .filter((giveaway) => giveaway.copies > 1)
-      .sort((a, b) => {
-        if (a.copies === b.copies) {
-          return a.cost < b.cost ? 1 : -1;
-        }
-        return a.copies < b.copies ? 1 : -1;
-      });
+    await saveSession(landingPage, cookiesFilePath);
 
-    const singleCopyGiveaways = unenteredGiveaways
-      .filter((giveaway) => giveaway.copies === 1)
-      .sort((a, b) => (a.cost < b.cost ? 1 : -1));
+    await landingPage.close();
+    await browser.close();
 
-    let totalCost = 0;
-    const allGiveaways: Giveaway[] = [];
-
-    if (multiCopiesGiveaways.length) {
-      multiCopiesGiveaways.forEach((giveaway) => {
-        const { name, copies, cost } = giveaway;
-
-        if (totalCost + cost <= currPoints) {
-          totalCost += cost;
-          console.log(
-            `Found a giveaway for ${copies} copies of "${name}" that costs ${cost} ${cost > 1 ? "points" : "point"}.`,
-          );
-
-          allGiveaways.push(giveaway);
-        }
-      });
-    }
-
-    if (singleCopyGiveaways.length) {
-      singleCopyGiveaways.forEach((giveaway) => {
-        const { name, cost } = giveaway;
-
-        if (totalCost + cost <= currPoints) {
-          totalCost += cost;
-          console.log(
-            `Found a giveaway for 1 copy of "${name}" that costs ${cost} ${cost > 1 ? "points" : "point"}.`,
-          );
-
-          allGiveaways.push(giveaway);
-        }
-      });
-    }
-
-    if (allGiveaways.length) {
-      console.log(
-        `\nFound a total of ${allGiveaways.length} ${allGiveaways.length > 1 ? "giveaways" : "giveaway"} with a total cost of ${totalCost} ${totalCost > 1 ? "points" : "point"}, entering...`,
-      );
-
-      const giveawayPromises = allGiveaways.map(async (giveaway, index) => {
-        const { href } = giveaway;
-
-        const giveawayPage = await browser.newPage();
-        await giveawayPage.goto(href);
-
-        try {
-          const enterButton = await giveawayPage.$(".sidebar__entry-insert");
-          if (enterButton) {
-            await enterButton.click();
-            console.info(
-              `Entered giveaway ${allGiveaways.length - index}/${allGiveaways.length}.`,
-            );
-          } else {
-            console.warn(`Enter button not found for giveaway: ${href}`);
-          }
-        } catch (error) {
-          console.error(`Error entering giveaway ${href}:`, error);
-        } finally {
-          await giveawayPage.close();
-        }
-      });
-
-      await Promise.all(giveawayPromises);
-    } else {
-      console.log("Found no giveaways you can afford.");
-    }
-  } else {
-    console.log("Found no unentered giveaways.");
+    return;
   }
+
+  console.info(
+    `There are ${unenteredGiveaways.length} unentered giveaways, checking which ones you can enter...\n`,
+  );
+
+  const multiCopiesGiveaways = unenteredGiveaways
+    .filter((giveaway) => giveaway.copies > 1)
+    .sort((a, b) => {
+      if (a.copies === b.copies) {
+        return a.cost < b.cost ? 1 : -1;
+      }
+      return a.copies < b.copies ? 1 : -1;
+    });
+
+  const singleCopyGiveaways = unenteredGiveaways
+    .filter((giveaway) => giveaway.copies === 1)
+    .sort((a, b) => (a.cost < b.cost ? 1 : -1));
+
+  let totalCost = 0;
+  const allGiveaways: Giveaway[] = [];
+
+  if (multiCopiesGiveaways.length) {
+    multiCopiesGiveaways.forEach((giveaway) => {
+      const { name, copies, cost } = giveaway;
+
+      if (totalCost + cost <= currPoints) {
+        totalCost += cost;
+        console.info(
+          `Found a giveaway for ${copies} copies of "${name}" that costs ${cost} ${cost > 1 ? "points" : "point"}.`,
+        );
+
+        allGiveaways.push(giveaway);
+      }
+    });
+  }
+
+  if (singleCopyGiveaways.length) {
+    singleCopyGiveaways.forEach((giveaway) => {
+      const { name, cost } = giveaway;
+
+      if (totalCost + cost <= currPoints) {
+        totalCost += cost;
+        console.info(
+          `Found a giveaway for 1 copy of "${name}" that costs ${cost} ${cost > 1 ? "points" : "point"}.`,
+        );
+
+        allGiveaways.push(giveaway);
+      }
+    });
+  }
+
+  if (!allGiveaways.length) {
+    console.info("Found no unentered giveaways, exiting...");
+
+    await saveSession(landingPage, cookiesFilePath);
+
+    await landingPage.close();
+    await browser.close();
+
+    return;
+  }
+
+  console.info(
+    `\nFound a total of ${allGiveaways.length} ${allGiveaways.length > 1 ? "giveaways" : "giveaway"} with a total cost of ${totalCost} ${totalCost > 1 ? "points" : "point"}, entering...`,
+  );
+
+  const giveawayPromises = allGiveaways.map(async (giveaway, index) => {
+    const { href } = giveaway;
+
+    const giveawayPage = await browser.newPage();
+    await giveawayPage.goto(href);
+
+    try {
+      const enterButton = await giveawayPage.$(".sidebar__entry-insert");
+      if (enterButton) {
+        await enterButton.click();
+        console.info(
+          `Entered giveaway ${allGiveaways.length - index}/${allGiveaways.length}.`,
+        );
+      } else {
+        console.warn(`Enter button not found for giveaway: ${href}`);
+      }
+    } catch (error) {
+      console.error(`Error entering giveaway ${href}:`, error);
+    } finally {
+      await giveawayPage.close();
+    }
+  });
+
+  await Promise.all(giveawayPromises);
 
   await saveSession(landingPage, cookiesFilePath);
 
