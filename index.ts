@@ -17,6 +17,18 @@ import { saveSession } from "./utils/saveSession";
   const currPoints = await landingPage.$eval(".nav__points", (el) =>
     parseInt(el.textContent || "0"),
   );
+
+  if (!currPoints) {
+    console.info("You have 0 points, exiting...");
+
+    await saveSession(landingPage, cookiesFilePath);
+
+    await landingPage.close();
+    await browser.close();
+
+    return;
+  }
+
   console.log(`You currently have ${currPoints} points, getting giveaways...`);
 
   const unenteredGiveaways = await landingPage.$$eval(
