@@ -128,7 +128,7 @@ import { saveSession } from "./utils/saveSession";
           if (enterButton) {
             await enterButton.click();
             console.info(
-              `Entered giveaway ${allGiveaways.length - index + 1}/${allGiveaways.length}.`,
+              `Entered giveaway ${allGiveaways.length - index}/${allGiveaways.length}.`,
             );
           } else {
             console.warn(`Enter button not found for giveaway: ${href}`);
