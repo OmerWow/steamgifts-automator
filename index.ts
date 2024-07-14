@@ -1,7 +1,6 @@
 import puppeteer from "puppeteer";
 import type { Giveaway } from "./types/giveaways";
 import { loadSession } from "./utils/loadSession";
-import { saveSession } from "./utils/saveSession";
 import { terminate } from "./utils/terminate";
 
 (async () => {
