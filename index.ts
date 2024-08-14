@@ -4,12 +4,18 @@ import { loadSession } from "./utils/loadSession";
 import { terminate } from "./utils/terminate";
 
 (async () => {
+  // set headless to false if you need to login manually
   const browser = await puppeteer.launch({ headless: true });
   const landingPage = await browser.newPage();
 
   await loadSession(landingPage);
 
+  await landingPage.setViewport({ width: 1920, height: 1080 });
   await landingPage.goto("https://www.steamgifts.com");
+
+  // sleep for 2 minutes to allow user to login
+  // await new Promise((resolve) => setTimeout(resolve, 120000));
+  // uncomment the above line if you need to login manually
 
   const currPoints = await landingPage.$eval(".nav__points", (el) =>
     parseInt(el.textContent || "0"),
@@ -59,7 +65,7 @@ import { terminate } from "./utils/terminate";
           } else {
             currentGiveaway.cost = parseInt(
               copiesOrCostStr?.substring(1, copiesOrCostStr?.indexOf("P")) ||
-                "0",
+              "0",
             );
           }
 
