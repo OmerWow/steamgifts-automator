@@ -10,7 +10,6 @@ import { terminate } from "./utils/terminate";
 
   await loadSession(landingPage);
 
-  await landingPage.setViewport({ width: 1920, height: 1080 });
   await landingPage.goto("https://www.steamgifts.com");
 
   // sleep for 2 minutes to allow user to login
